@@ -4,6 +4,7 @@
 (provide option-code)
 
 ;TDA option
+
 ;Constructor
 ;option: Crea una opción para flujo del chatbot
 ;;;Dominio:
@@ -21,8 +22,8 @@
            (integer? flowclink)
            (or (null? keys) (list? keys))
            )
-      (list code message cbotclink flowclink keys)
-      ((display "Error al crear opción") #f)
+      (list code message cbotclink flowclink (map string-downcase keys) )
+      (begin (display "Error al crear opción") #f)
    )
 )
 
