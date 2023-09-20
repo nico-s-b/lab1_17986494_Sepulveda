@@ -1,7 +1,0 @@
-#lang racket
-
-(define
-  (option code message cbotclink flowclink . keys)
-  (list code message cbotclink flowclink keys)
-)
-; verificar unicidad al agregarlo a un Flow
