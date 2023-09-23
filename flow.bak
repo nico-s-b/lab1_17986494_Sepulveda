@@ -1,39 +1,26 @@
 #lang racket
 
 (provide flow)
-(provide flow?)
 (provide flow-add-option)
-(provide flows-rem-duplicates)
 (require "option.rkt")
 
 ;TDA flow
 
 ;Constructor
 ;flow: crea un flujo para un chatbot
-;;;Dominio: id (int) X name (string) X *options
+;;;Dominio:
+;id (int) número identificador del flujo
+;name (string) nombre dado al flujo
+;options (cantidad variable) opciones asociadas al flujo
 ;;;Recorrido: flow
 (define flow
   (lambda (id name . options)
     (if (and (integer? id)
-             (string? name)
-             (or (null? options) (andmap option? options)))
+             (string? name))
       (list id name (options-rem-duplicates options))
-      (raise "Error al crear flow")
+      (begin (display "Error al crear flow") #f)
     )
   )
-)
-
-;Pertenencia
-;flow?: Comprueba que los elementos de una lista dada cumplen con el formato del TDA flow
-;Dom: list
-;Rec: boolean
-(define (flow? args)
-  (if (and (>= (length args) 2)
-           (integer? (flow-id args))
-           (string? (flow-name args))
-           (or (null? (flow-options args)) (andmap option? (flow-options args))))
-      #t
-      #f)
 )
 
 ;Selectores
@@ -43,7 +30,7 @@
 
 ;flow-name
 ;Dominio: flow / Recorrido: name (string)
-(define flow-name cadr)
+(define flow-name (lambda (flow) (car (cdr flow))))
 
 ;flow-options
 ;Dominio: flow / Recorrido: lista de opciones (list)
@@ -60,15 +47,14 @@
 )
 
 ;Otras funciones
-;flows-rem-duplicates: remueve flows duplicados de una lista de flows en base
-;al id del flujo, dejando la primera aparición de la opción únicamente
-;;;Dominio: flows (list)
-;;;Recorrido: flows (list)
-;Utiliza la función remove-duplicates, utilizando como criterio la igualdad de IDs de los flujos.
-;*Misma lógica que función options-rem-duplicates*
-(define (flows-rem-duplicates flows)
-  (remove-duplicates flows
-                     (lambda (x y) (equal? (flow-id x) (flow-id y) ))
+;options-rem-duplicates: remueve opciones duplicadas de una lista de opciones en base
+;al id de la opción, dejando la primera aparición de la opción únicamente
+;;;Dominio: options (list)
+;;;Recorrido: options (list)
+;Utiliza la función remove-duplicates, utilizando como criterio la igualdad de IDs de las opciones.
+(define (options-rem-duplicates options)
+  (remove-duplicates options
+                     (lambda (x y) (equal? (option-code x) (option-code y) ))
   )
 )
 
