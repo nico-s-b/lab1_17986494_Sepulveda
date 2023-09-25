@@ -3,7 +3,6 @@
 (provide chatbot)
 (provide chatbot-add-flow)
 (provide chatbots-rem-duplicates)
-(require "option.rkt")
 (require "flow.rkt")
 
 ;Constructor
@@ -44,14 +43,14 @@
 ;;;Dominio: chatbot X flow
 ;;;Recorrido: chatbot
 ;Recursión: de cola
-;Función aplica recursión de cola para recompletar la lista de flows existentes y finalmente
-;verifica que el flow que se desea añadir no esté previamente en la nueva lista de flows:
-;en caso de no estar, lo añade. Si no, retorna los flujos originales. Recursión de cola
-;permite ir reduciendo una lista (de flows por revisar) y de flows añadidos en cada llamado.
+;Función aplica recursión natural para verificar la no repitencia del id de flow en la lista de flows
+;existentes y lo añade si no está previamente. En caso contrario, devuelve los flows originales.
+;Recursión de cola se propone por una sintaxis "natural" para el procedimiento, a partir de la idea de
+;verificar elemento a elemento de la lista si hay duplicación de id, continuando con el resto de la lista en cada llamado recursivo.
 (define (chatbot-add-flow chatbot flow)
   (define (add-flows flows flow)
    (cond [(null? flows) flow] ;caso base 1: agregar si no hay opciones
-        [(equal? (car flows) flow) flows] ;caso base 2: retornar chatbot sin cambios si flow tiene id repetido existente
+        [(equal? (flow-id (car flows)) (flow-id flow)) flows] ;caso base 2: retornar chatbot sin cambios si flow tiene id repetido existente
         [else (cons (car flows) (add-flows (cdr flows) flow))]) ;llamada recursiva: se mantiene el primer elemento y se continúa la recursión con el resto
    )
   (list (chatbot-id chatbot) (chatbot-name chatbot) (chatbot-welcome chatbot)
@@ -70,3 +69,17 @@
                      (lambda (x y) (equal? (chatbot-id x) (chatbot-id y) ))
   )
 )
+
+;(define op1 (option 1 "op1" 2 3 "as" "qw"))
+;(define op2 (option 2 "op2" 2 4))
+;(define op3 (option 3 "op3" 1 3 "we"))
+;(define op4 (option 1 "op4" 5 6 "df" "ry"))
+;(define flow1 (flow 1 "f1" op1 op2))
+;(define flow2 (flow 2 "f2" op1 op2 op3 op4))
+;(define flow3 (flow 3 "f3" op1))
+;(define flow4 (flow-add-option flow3 op2))
+;(define flow5 (flow-add-option flow4 op4))
+;(define flow6 (flow 6 "f6" op1 op2 op2 op3 op3))
+;(define flow7 (flow-add-option flow6 op3))
+;(define cb2 (chatbot 2 "cb2" "Hola" flow1))
+;(chatbot-add-flow cb2 flow3)

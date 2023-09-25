@@ -2,6 +2,7 @@
 
 (require "option.rkt")
 (require "flow.rkt")
+(require "chatbot.rkt")
 
 (define op1 (option  1 "1) Viajar" 2 1 "viajar" "turistear" "conocer"))
 (define op2 (option  2 "2) Estudiar" 3 1 "estudiar" "aprender" "perfeccionarme"))

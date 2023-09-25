@@ -2,6 +2,7 @@
 
 (provide flow)
 (provide flow?)
+(provide flow-id)
 (provide flow-add-option)
 (provide flows-rem-duplicates)
 (require "option.rkt")
@@ -71,15 +72,3 @@
                      (lambda (x y) (equal? (flow-id x) (flow-id y) ))
   )
 )
-
-(define op1 (option 1 "op1" 2 3 "as" "qw"))
-(define op2 (option 2 "op2" 2 4))
-(define op3 (option 3 "op3" 1 3 "we"))
-(define op4 (option 1 "op4" 5 6 "df" "ry"))
-(define flow1 (flow 1 "f1" op1 op2))
-(define flow2 (flow 2 "f2" op1 op2 op3 op4))
-(define flow3 (flow 3 "f3" op1))
-(define flow4 (flow-add-option flow3 op2))
-(define flow5 (flow-add-option flow4 op4))
-(define flow6 (flow 6 "f6" op1 op2 op2 op3 op3))
-(define flow7 (flow-add-option flow6 op3))
