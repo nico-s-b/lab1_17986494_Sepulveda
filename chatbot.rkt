@@ -1,6 +1,7 @@
 #lang racket
 
 (provide chatbot)
+(provide chatbot?)
 (provide chatbot-add-flow)
 (provide chatbots-rem-duplicates)
 (require "flow.rkt")
@@ -19,6 +20,18 @@
         (raise "Error al crear chatbot")
     )
   )
+)
+
+;Pertenencia
+;chatbot?
+;Dominio: chatbot / Recorrido: boolean
+(define (chatbot? args)
+  (if (and (>= (length args) 2)
+           (integer? chatbot-id args)
+           (string? chatbot-name args)
+           (or (null? (chatbot-flows args)) (andmap flow? (chatbot-flows args))))
+      #t
+      #f)
 )
 
 ;Selectores

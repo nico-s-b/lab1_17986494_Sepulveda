@@ -63,4 +63,4 @@
 (define s16 (system-talk-rec s15 "3"))
 (define s17 (system-talk-rec s16 "5"))
 (display (system-synthesis s17 "user2"))
-(system-simulate s0)
+(system-simulate s0 5 32131)
