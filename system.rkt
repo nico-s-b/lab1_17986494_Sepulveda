@@ -19,3 +19,53 @@
    )
 )
 
+;Pertenencia
+;system?
+;Dominio: system / Recorrido: boolean
+(define (system? system)
+  (if (and (>= (lenght system) 2)
+           (string? (system-name system))
+           (intenger? (system-cblink system))
+           (or (null? (system-chatbots system)) (andmap chatbot? (system-chatbots system))))
+      #t
+      #f)
+)
+
+;Selector
+;system-name
+;Dominio: system / Recorrido: name (string)
+(define system-name car)
+
+;system-cblink
+;Dominio: system / Recorrido: initialChatbotCodeLink (int)
+(define system-name cadr)
+
+;system-chatbots
+;Dominio: system / Recorrido: lista de chatbots (list)
+(define system-name caddr)
+
+;system-users
+;Dominio: system / Recorrido: lista de users (list)
+(define system-users cadddr)
+
+;Modificador
+;system-add-flow: Función que añade chatbots a un sistema existente
+;;;Dominio: system X chatbot
+;;;Recorrido: system
+(define (system-add-chatbot system . chatbots)
+  (if (and (system? system)
+           (andmap chatbot? chatbots))
+      (list (system-name system)
+            (system-cblink system)
+            (chatbots-rem-duplicates (list (system-chatbots system) chatbots)))
+      (raise "No se pudo añadir chatbot")
+  )
+)
+
+;system-add-user: Añade un usuario al sistema
+;;;Dominio: system X user (string)
+;;;Recorrido: system
+;(define (system-add-user user)
+;  (if (not (member? user (system-users ))))
+;)
+;()
