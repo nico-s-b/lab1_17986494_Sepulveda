@@ -6,10 +6,7 @@
 (provide chatbots-rem-duplicates)
 (require "flow.rkt")
 
-;TDA chatbot
-
-;---------------------Constructor---------------------
-
+;Constructor
 ;chatbot: función que construye un chatbot
 ;;;Dominio: chatbotID (int) X name (string) X welcomeMessage (string) X initialFlowCode (int) X *flows
 ;;;Recorrido: chatbot
@@ -25,9 +22,8 @@
   )
 )
 
-;---------------------Pertenencia---------------------
-
-;chatbot?: comprueba si un listado de elementos corresponde a un chatbot
+;Pertenencia
+;chatbot?
 ;Dominio: chatbot / Recorrido: boolean
 (define (chatbot? args)
   (if (and (>= (length args) 2)
@@ -38,30 +34,24 @@
       #f)
 )
 
-;---------------------Selectores---------------------
-
-;chatbot-id: selecciona el código id del chatbot
-;Dominio: chatbot
-;Recorrido: id (int)
+;Selectores
+;chatbot-id
+;Dominio: chatbot / Recorrido: id (int)
 (define chatbot-id car)
 
-;chatbot-name: selecciona el nombre del chatbot
-;Dominio: chatbot
-;Recorrido: name (string)
+;chatbot-name
+;Dominio: chatbot / Recorrido: name (string)
 (define chatbot-name cadr)
 
-;chatbot-welcome: selecciona mensaje de bienvenida del chatbot
-;Dominio: chatbot
-;Recorrido: welcomeMessage (string)
+;chatbot-welcome
+;Dominio: chatbot / Recorrido: welcomeMessage (string)
 (define chatbot-welcome caddr)
 
-;chatbot-flows: selecicona el listado de flujos del chatbot
-;Dominio: chatbot
-;Recorrido: flows (lista)
+;chatbot-flows
+;Dominio: chatbot / Recorrido: flows (lista)
 (define chatbot-flows cadddr)
 
-;---------------------Modificadores---------------------
-
+;Modificador
 ;chatbot-add-flow
 ;;;Dominio: chatbot X flow
 ;;;Recorrido: chatbot
@@ -80,8 +70,7 @@
         (add-flows (chatbot-flows chatbot) flow))
 )
 
-;---------------------Otras funciones---------------------
-
+;Otras funciones
 ;chatbots-rem-duplicates: remueve chatbots duplicados de una lista de chatbot en base
 ;al id de este, dejando la primera aparición del chatbot únicamente
 ;;;Dominio: chatbots (list)

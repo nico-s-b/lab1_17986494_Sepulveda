@@ -6,8 +6,7 @@
 
 ;TDA option
 
-;---------------------Constructor---------------------
-
+;Constructor
 ;option: Crea una opción para flujo del chatbot
 ;;;Dominio: code (int) X message (string) X chatbotcodelink (int) X flowcodelink (int) X *keys
 ;;;Recorrido: option
@@ -24,8 +23,7 @@
    )
 )
 
-;---------------------Pertenencia---------------------
-
+;Pertenencia
 ;option?: Comprueba que los elementos de una lista dada cumplen con el formato del TDA option
 ;Dom: list
 ;Rec: boolean
@@ -42,35 +40,32 @@
     )
 )
 
-;---------------------Selectores---------------------
-
-;option-code: seleccionar codigo de opción
+;Selector code
 ;Dominio: option
 ;Recorrido: int (code)
 (define option-code car)
 
-;option-message: seleccionar el mensaje de la opción
+;Selector message
 ;Dominio: option
 ;Recorrido: string (message)
 (define option-message cadr)
 
-;option-cblink: seleccionar chatbotcodelink de la opción
+;Selector chatbotcodelink
 ;Dominio: option
 ;Recorrido: int (chatbotcodelink)
 (define option-cblink caddr)
 
-;option-flink: seleccionar flowcodelink de la opcion
+;Selector flowcodelink
 ;Dominio: option
 ;Recorrido: int (flowcodelink)
 (define option-flink cadddr)
 
-;option-keys: seleccionar el listado de palabras clave de la opción (keys)
+;Selector keys
 ;Dominio: option
 ;Recorrido: list (keys)
 (define option-keys (compose cadddr cdr))
 
-;---------------------Otras funciones---------------------
-
+;Otras funciones
 ;options-rem-duplicates: remueve opciones duplicadas de una lista de opciones en base
 ;al id de la opción, dejando la primera aparición de la opción únicamente
 ;;;Dominio: options (list)

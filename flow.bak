@@ -9,8 +9,7 @@
 
 ;TDA flow
 
-;---------------------Constructor---------------------
-
+;Constructor
 ;flow: crea un flujo para un chatbot
 ;;;Dominio: id (int) X name (string) X *options
 ;;;Recorrido: flow
@@ -25,8 +24,7 @@
   )
 )
 
-;---------------------Pertenencia---------------------
-
+;Pertenencia
 ;flow?: Comprueba que los elementos de una lista dada cumplen con el formato del TDA flow
 ;Dom: list
 ;Rec: boolean
@@ -39,25 +37,20 @@
       #f)
 )
 
-;---------------------Selectores---------------------
-
-;flow-id: selecciona el código id del flujo
-;Dominio: flow
-;Recorrido: id (int)
+;Selectores
+;flow-id
+;Dominio: flow / Recorrido: id (int)
 (define flow-id car)
 
-;flow-name: selecciona el nombre del flujo
-;Dominio: flow
-;Recorrido: name (string)
+;flow-name
+;Dominio: flow / Recorrido: name (string)
 (define flow-name cadr)
 
-;flow-options: selecciona el listado de opciones del flujo
-;Dominio: flow
-;Recorrido: lista de opciones (list)
+;flow-options
+;Dominio: flow / Recorrido: lista de opciones (list)
 (define flow-options (lambda (flow) (caddr flow)))
 
-;---------------------Modificadores---------------------
-
+;Modificador
 ;flow-add-option: añade una opción a un flujo ya existente.
 ;;;Dominio: flow X option
 ;;;Recorrido: flow
@@ -67,8 +60,7 @@
   )
 )
 
-;---------------------Otras funciones---------------------
-
+;Otras funciones
 ;flows-rem-duplicates: remueve flows duplicados de una lista de flows en base
 ;al id del flujo, dejando la primera aparición de la opción únicamente
 ;;;Dominio: flows (list)

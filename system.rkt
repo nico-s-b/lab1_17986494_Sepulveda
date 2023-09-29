@@ -6,6 +6,7 @@
 (require "chatbot.rkt")
 
 ;TDA system
+
 ;Constructor
 ;system: función que crea un nuevo sistema de chatbots (system)
 ;;;Dominio: name (string) X initialChatbotCodeLink (int) X *chatbots
@@ -38,7 +39,7 @@
 
 ;system-cblink
 ;Dominio: system / Recorrido: initialChatbotCodeLink (int)
-(define system-name cadr)
+(define system-cblink cadr)
 
 ;system-chatbots
 ;Dominio: system / Recorrido: lista de chatbots (list)
@@ -65,7 +66,20 @@
 ;system-add-user: Añade un usuario al sistema
 ;;;Dominio: system X user (string)
 ;;;Recorrido: system
-;(define (system-add-user user)
-;  (if (not (member? user (system-users ))))
-;)
-;()
+(define (system-add-user system user)
+  (if (or (null? (system-users system)) (not (member user (system-users system))))
+      (list system (list (system-users system) user))
+      (if (system? system) system (raise "No se pudo realizar la operación")))
+)
+
+;Otras funciones
+;system-login: permite a un usuario iniciar sesión en el sistema
+;;;Dominio: system X user (string)
+;;;Recorrido: system
+(define (system-login system user)
+  (if (and (system? system) (string? user) (not (member 1 system)))
+      (if (member user (system-users system))   ;si (member 1 system) = #t hay una sesión iniciada por user
+          (list (system-name system) (system-cblink system) (system-chatbots system) user 1)
+          (raise (string-append "Usuario " user " no está registrado en el sistema")))
+      (raise "No se pudo realizar la operación"))
+)
