@@ -27,8 +27,8 @@
 ;---------------------Pertenencia---------------------
 
 ;option?: Comprueba que los elementos de una lista dada cumplen con el formato del TDA option
-;Dom: list
-;Rec: boolean
+;Dominio: list
+;Recorrido: boolean
 (define (option? args)
   (if (and (>= (length args) 4)
            (integer? (option-code args))
