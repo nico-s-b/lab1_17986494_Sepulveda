@@ -10,6 +10,7 @@
 (require "option.rkt")
 (require "flow.rkt")
 (require "chatbot.rkt")
+(require "user.rkt")
 
 ;TDA system
 
@@ -80,18 +81,19 @@
 )
 
 ;system-add-user: Añade un usuario al sistema
-;;;Dominio: system X user (string)
+;;;Dominio: system X newUser (string)
 ;;;Recorrido: system
-(define (system-add-user system user)
+(define (system-add-user system newUser)
   (if (system? system)
       (if (= (length system) 3) ;si aún no se ha agregado ningún usuario, agregar uno
           (list (system-name system) (system-cblink system)
-                (system-chatbots system) (list user))
-          (if (not (member user (system-users system)))
+                (system-chatbots system) (list (user newUser)))
+          (if (null? (user-insystem newUser (system-users system)))
               (list (system-name system) (system-cblink system)
-                    (system-chatbots system) (append (system-users system) (list user)))
+                    (system-chatbots system) (append (system-users system) (list (user newUser))))
               system))
-      (display "No se pudo añadir usuario"))
+      (display "No se pudo añadir usuario")
+  )
 )
 
 ;---------------------Otras funciones---------------------
@@ -102,16 +104,23 @@
 ;;;Recorrido: system
 (define (system-login system user)
   (if (and (system? system) (string? user))
-      (if (not (string? (car (reverse system))))  ;si el último elemento no es un string, no hay una sesión iniciada
-          (if (member user (system-users system)) ;comprobar si el usuario está registrado en el sistema  
-              (append system (list user))         ;si no hay una sesión, añade el usuario al final de system como señal de inicio de sesión
+      (if (not (system-logged? system))  ;si system tiene menos de 5 elementos, no hay una sesión iniciada
+          (if (not (null? (user-insystem user (system-users system)))) ;comprobar si el usuario está registrado en el sistema  
+              (append system (list (user-insystem user (system-users system))))         ;si no hay una sesión, añade el usuario al final de system como señal de inicio de sesión
               system)
           system
        )
       (display "Error al intentar iniciar sesión"))
 )
-;(display (string-append "Usuario " user " no está registrado en el sistema"))
 
+;system-logged?: función que indica si hay una sesión iniciada o no. Lo hace comprobando el tamaño de system
+;Dominio: system
+;Recorrido: boolean
+(define (system-logged? system)
+  (if (>= (length system) 5)
+      #t
+      #f)
+)
 
 ;system-logout: cierra una sesión abierta por un usuario si hay una activa
 ;;;Dominio: system
@@ -119,19 +128,31 @@
 (define system-logout
   (lambda (system)
     (if (system? system)
-        (if (string? (car (reverse system)))  ;comprueba si hay sesión iniciada (string de usuario al final)
+        (if (system-logged? system)  ;comprueba si hay sesión iniciada (system tiene al menos 5 elementos)
             (list (system-name system) (system-cblink system)
                   (system-chatbots system) (system-users system))
             system)
         (display "No se realiza acción logout. Sistema no válido"))
 ))
 
+;system-talk-rec
+;Dominio: system X mensaje (string)
+;Recorrido: system
+(define system-talk-rec
+  (lambda (system mens)
+    (if (system-logged? system) ;Se comprueba si hay una sesión iniciada
+        (1)
+        system) ;solo es posible conversar si hay una sesión iniciada
+  )
+)
+
+
 (define op1 (option  1 "1) Viajar" 2 1 "viajar" "turistear" "conocer"))
 (define op2 (option  2 "2) Estudiar" 3 1 "estudiar" "aprender" "perfeccionarme"))
 (define f10 (flow 1 "flujo1" op1 op2 op2 op2 op2 op1)) ;solo añade una ocurrencia de op2
 (define f11 (flow-add-option f10 op1)) ;se intenta añadir opción duplicada
-(define cb0 (chatbot 0 "Inicial" "Bienvenido\n¿Qué te gustaría hacer?" f10 f10 f10 f10))  ;solo añade una ocurrencia de f10
-(define cb1 (chatbot 1 "cb2" "Hola" f11))
+(define cb0 (chatbot 0 "Inicial" "Bienvenido\n¿Qué te gustaría hacer?" 1 f10 f10 f10 f10))  ;solo añade una ocurrencia de f10
+(define cb1 (chatbot 1 "cb2" "Hola" 2 f11))
 (define s0 (system "Chatbots Paradigmas" 0 cb0 cb0 cb0 cb1))
 (define cbl (append (system-chatbots s0) (list cb0 cb1)))
 (define s1 (system-add-chatbot s0 cb0)) ;igual a s0

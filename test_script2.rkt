@@ -1,5 +1,11 @@
 #lang racket
 
+(require "option.rkt")
+(require "flow.rkt")
+(require "chatbot.rkt")
+(require "system.rkt")
+(require "user.rkt")
+
 ;Ejemplo de un sistema de chatbots basado en el esquema del enunciado general
 ;Chabot0
 (define op1 (option  1 "1) Viajar" 1 1 "viajar" "turistear" "conocer"))
@@ -45,22 +51,13 @@
 (define s8 (system-login s7 "user2"))
 (define s9 (system-logout s8))
 (define s10 (system-login s9 "user2"))
-(define s1 (system-add-chatbot s0 cb0)) ;igual a s0
-(define s2 (system-add-user s1 "user1"))
-(define s3 (system-add-user s2 "user2"))
-(define s4 (system-add-user s3 "user2"))
-(define s5 (system-add-user s4 "user3"))
-(define s6 (system-login s5 "user8"))
-(define s7 (system-login s6 "user1"))
-(define s8 (system-login s7 "user2"))
-(define s9 (system-logout s8))
-(define s10 (system-login s9 "user2"))
-(define s11 (system-talk-rec s10 "hola"))
-(define s12 (system-talk-rec s11 "1"))
-(define s13 (system-talk-rec s12 "1"))
-(define s14 (system-talk-rec s13 "Museo"))
-(define s15 (system-talk-rec s14 "1"))
-(define s16 (system-talk-rec s15 "3"))
-(define s17 (system-talk-rec s16 "5"))
-(display (system-synthesis s17 "user2"))
-(system-simulate s0 5 32131)
+
+;(define s11 (system-talk-rec s10 "hola"))
+;(define s12 (system-talk-rec s11 "1"))
+;(define s13 (system-talk-rec s12 "1"))
+;(define s14 (system-talk-rec s13 "Museo"))
+;(define s15 (system-talk-rec s14 "1"))
+;(define s16 (system-talk-rec s15 "3"))
+;(define s17 (system-talk-rec s16 "5"))
+;(display (system-synthesis s17 "user2"))
+;(system-simulate s0 5 32131)

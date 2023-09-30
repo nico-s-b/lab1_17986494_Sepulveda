@@ -15,12 +15,13 @@
 ;;;Dominio: chatbotID (int) X name (string) X welcomeMessage (string) X initialFlowCode (int) X *flows
 ;;;Recorrido: chatbot
 (define chatbot
-  (lambda (chatbotID name welcomeMessage . flows)
+  (lambda (chatbotID name welcomeMessage startFlowId . flows)
     (if (and (integer? chatbotID)
              (string? name)
              (string? welcomeMessage)
+             (integer? startFlowId)
              (or (null? flows) (andmap flow? flows)))
-        (list chatbotID name welcomeMessage (flows-rem-duplicates flows))
+        (list chatbotID name welcomeMessage startFlowId (flows-rem-duplicates flows))
         (raise "Error al crear chatbot")
     )
   )
@@ -31,9 +32,10 @@
 ;chatbot?: comprueba si un listado de elementos corresponde a un chatbot
 ;Dominio: chatbot / Recorrido: boolean
 (define (chatbot? args)
-  (if (and (>= (length args) 2)
+  (if (and (>= (length args) 3)
            (integer? (chatbot-id args))
            (string? (chatbot-name args))
+           (integer? (chatbot-flowid args))
            (or (null? (chatbot-flows args)) (andmap flow? (chatbot-flows args))))
       #t
       #f)
@@ -56,10 +58,17 @@
 ;Recorrido: welcomeMessage (string)
 (define chatbot-welcome caddr)
 
+;chatbot-flowid: selecciona el identificador de flujo inicial startFlowId
+;Dominio: chatbot
+;Recorrido: startFlowId (int)
+(define chatbot-flowid cadddr)
+
 ;chatbot-flows: selecicona el listado de flujos del chatbot
 ;Dominio: chatbot
 ;Recorrido: flows (lista)
-(define chatbot-flows cadddr)
+(define chatbot-flows
+  (lambda (cbot) (car (cdr (cdr (cdr (cdr cbot))))))
+)
 
 ;---------------------Modificadores---------------------
 
@@ -78,7 +87,7 @@
         [else (cons (car flows) (add-flows-aux (cdr flows) flow))]) ;llamada recursiva: se mantiene el primer elemento y se continúa la recursión con el resto
    )
   (list (chatbot-id chatbot) (chatbot-name chatbot) (chatbot-welcome chatbot)
-        (add-flows-aux (chatbot-flows chatbot) flow))
+        (chatbot-flowid chatbot) (add-flows-aux (chatbot-flows chatbot) flow))
 )
 
 ;---------------------Otras funciones---------------------
@@ -107,7 +116,7 @@
 (define flow5 (flow-add-option flow4 op4))
 (define flow6 (flow 6 "f6" op1 op2 op2 op3 op3))
 (define flow7 (flow-add-option flow6 op3))
-(define cb1 (chatbot 2 "cb2" "Hola" flow1))
-(define cb2 (chatbot 2 "cb2" "Hola" flow1))
+(define cb1 (chatbot 2 "cb2" "Hola" 1 flow1))
+(define cb2 (chatbot 2 "cb2" "Hola" 2 flow1))
 (define cb3 (chatbot-add-flow cb2 flow3))
-(define cb4 (chatbot 2 "cb2" "Hola" flow1 flow3))
+(define cb4 (chatbot 2 "cb2" "Hola" 3 flow1 flow3))
