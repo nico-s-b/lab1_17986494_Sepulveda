@@ -20,7 +20,7 @@
            (or (null? keys) (andmap string? keys))
            )
       (list code message chatbotcodelink flowcodelink (map string-downcase keys) )
-      (null)
+      (raise "Error al crear opción")
    )
 )
 
@@ -30,10 +30,16 @@
 ;Dominio: list
 ;Recorrido: boolean
 (define (option? args)
-  (and (>= (length args) 4)
-           (not (null? (option (option-code args) (option-message args) (option-cblink args)
-                               (option-flink args))))
+  (if (and (>= (length args) 4)
+           (integer? (option-code args))
+           (string? (option-message args))
+           (integer? (option-cblink args))
+           (integer? (option-flink args))
+           (or (null? (option-keys args)) (andmap string? (option-keys args)))
            )
+      #t
+      #f
+    )
 )
 
 ;---------------------Selectores---------------------
