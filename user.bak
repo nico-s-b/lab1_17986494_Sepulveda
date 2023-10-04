@@ -2,7 +2,10 @@
 
 (provide user)
 (provide user-insystem)
-(require "chathistory.rkt")
+
+(require "option.rkt")
+(require "flow.rkt")
+(require "chatbot.rkt")
 
 ;TDA user
 
@@ -12,7 +15,7 @@
 ;Dominio: username (string)
 ;Recorrido: user
 (define (user name)
-  (list name (chatH name))  ;el historial chathistory se irá guardando en '()
+  (list name '())  ;el historial chathistory se irá guardando en '()
 )
 
 ;---------------------Selector---------------------
@@ -26,9 +29,8 @@
 ;Recorrido: chatHistory
 (define user-chat cadr)
 
-;user-insystem: función que busca un usuario dentro de una lista de usuarios
-;registrados a partir de su nombre de usuario
-;Retorna una lista vacía en caso de que no exista el usuario
+;user-insystem: función que identifica busca un usuario dentro de una lista de usuarios registrados a partir de su nombre de usuario
+;retorna una lista vacía en caso de que no exista el usuario
 ;Dominio: username (string) X userlist (list)
 ;Recorrido: user
 (define (user-insystem username userlist)

@@ -52,7 +52,7 @@
 (define s9 (system-logout s8))
 (define s10 (system-login s9 "user2"))
 
-(define s11 (system-talk-norec s10 "hola"))
+;(define s11 (system-talk-rec s10 "hola"))
 ;(define s12 (system-talk-rec s11 "1"))
 ;(define s13 (system-talk-rec s12 "1"))
 ;(define s14 (system-talk-rec s13 "Museo"))

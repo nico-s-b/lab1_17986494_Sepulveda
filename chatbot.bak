@@ -4,9 +4,6 @@
 (provide chatbot?)
 (provide chatbot-add-flow)
 (provide chatbots-rem-duplicates)
-(provide chatbot-flows)
-(provide chatbot-id)
-(provide chatbot-talk-flow)
 (require "option.rkt")
 (require "flow.rkt")
 
@@ -66,19 +63,13 @@
 ;Recorrido: startFlowId (int)
 (define chatbot-flowid cadddr)
 
-;chatbot-flows: selecciona el listado de flujos del chatbot
+;chatbot-flows: selecicona el listado de flujos del chatbot
 ;Dominio: chatbot
 ;Recorrido: flows (lista)
 (define chatbot-flows
   (lambda (cbot) (car (cdr (cdr (cdr (cdr cbot))))))
 )
 
-;chatbot-talk-flow: función que selecciona el flow activo del chatbot de acuerdo al flow-id actual
-;Dominio: chatbot
-;Recorrido: flow
-(define (chatbot-talk-flow cbot)
-  (car (filter (lambda (fl) (= (chatbot-flowid cbot) (flow-id fl))) (chatbot-flows cbot)))
-)
 ;---------------------Modificadores---------------------
 
 ;chatbot-add-flow
@@ -99,14 +90,6 @@
         (chatbot-flowid chatbot) (add-flows-aux (chatbot-flows chatbot) flow))
 )
 
-;chatbot-change-flow: cambia el flow actual del chatbot dado un nuevo flow-id
-;Dominio: chatbot X flow-id (int)
-;Recorrido: chatbot
-(define (chatbot-change-flow cbot new-fl-id)
-  (list (chatbot-id cbot) (chatbot-name cbot) (chatbot-welcome cbot)
-        new-fl-id (chatbot-flows cbot))
-)
-
 ;---------------------Otras funciones---------------------
 
 ;chatbots-rem-duplicates: remueve chatbots duplicados de una lista de chatbot en base
@@ -120,3 +103,20 @@
                      (lambda (x y) (equal? (chatbot-id x) (chatbot-id y) ))
   )
 )
+
+
+(define op1 (option 1 "op1" 2 3 "as" "qw"))
+(define op2 (option 2 "op2" 2 4))
+(define op3 (option 3 "op3" 1 3 "we"))
+(define op4 (option 1 "op4" 5 6 "df" "ry"))
+(define flow1 (flow 1 "f1" op1 op2))
+(define flow2 (flow 2 "f2" op1 op2 op3 op4))
+(define flow3 (flow 3 "f3" op1))
+(define flow4 (flow-add-option flow3 op2))
+(define flow5 (flow-add-option flow4 op4))
+(define flow6 (flow 6 "f6" op1 op2 op2 op3 op3))
+(define flow7 (flow-add-option flow6 op3))
+(define cb1 (chatbot 2 "cb2" "Hola" 1 flow1))
+(define cb2 (chatbot 2 "cb2" "Hola" 2 flow1))
+(define cb3 (chatbot-add-flow cb2 flow3))
+(define cb4 (chatbot 2 "cb2" "Hola" 3 flow1 flow3))

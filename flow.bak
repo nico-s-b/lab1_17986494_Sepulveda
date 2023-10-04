@@ -5,7 +5,6 @@
 (provide flow-id)
 (provide flow-add-option)
 (provide flows-rem-duplicates)
-(provide flow-talk-op)
 (require "option.rkt")
 
 ;TDA flow
@@ -32,10 +31,12 @@
 ;Dom: list
 ;Rec: boolean
 (define (flow? args)
-  (and (>= (length args) 2)
-       (integer? (flow-id args))
-       (string? (flow-name args))
-       (or (null? (flow-options args)) (andmap option? (flow-options args))))
+  (if (and (>= (length args) 2)
+           (integer? (flow-id args))
+           (string? (flow-name args))
+           (or (null? (flow-options args)) (andmap option? (flow-options args))))
+      #t
+      #f)
 )
 
 ;---------------------Selectores---------------------
@@ -54,18 +55,6 @@
 ;Dominio: flow
 ;Recorrido: lista de opciones (list)
 (define flow-options (lambda (flow) (caddr flow)))
-
-;flow-talk-op: selecciona una opcion del flujo a partir de un mensaje dado, ya sea como string
-;o como entero
-;Dominio: flow X op (int or string)
-;Recorrido: option
-(define (flow-talk-op fl mens)
-  (cond [(string? mens)
-         (car (filter (lambda (op) (member mens (option-keys op))) (flow-options fl)))]
-        [(integer? mens)
-         (car (filter (lambda (op) (= mens (option-code op))) (flow-options fl)))]
-        )
-)
 
 ;---------------------Modificadores---------------------
 

@@ -2,6 +2,10 @@
 
 (provide option)
 (provide option?)
+(provide option-code)
+(provide option-keys)
+(provide option-cblink)
+(provide option-flink)
 (provide options-rem-duplicates)
 
 ;TDA option
