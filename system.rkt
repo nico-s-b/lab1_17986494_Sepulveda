@@ -77,10 +77,27 @@
 ;en el sistema de acuerdo al chatbot-codelink actual
 ;Dominio: system
 ;Recorrido: chatbot
-(define (system-talk-cb sys)
+(define (system-talk-chatbot sys)
   (car (filter
         (lambda (cb) (equal? (chatbot-id cb) (system-cblink sys)))
         (system-chatbots sys)))
+)
+
+;system-talk-flow: selecciona al flow activo actual en el chatbot cargado en el sistema
+;Dominio: system
+;Recorrido: flow
+(define (system-talk-flow system)
+  (chatbot-talk-flow (system-talk-chatbot system))
+)
+
+;system-talk-op: selecciona la opción correspondiente al mensaje dado de acuerdo al
+;chatbot actual y su flujo activo. Si el mensaje es string, flow-talk-op lo transforma a lowercase
+;Dominio: system X mensaje (string)
+;Recorrido: option
+(define system-talk-op
+  (lambda (system mens)
+    (flow-talk-op (system-talk-flow system) mens)
+  )
 )
 
 ;---------------------Modificadores---------------------
@@ -90,7 +107,7 @@
 ;Recorrido: system
 (define (system-change-chatbot new-cb-id)
   (list (system-name system) new-cb-id (system-chatbots system)
-        (system-users system) (system-logged-user))
+        (system-users system) (system-logged-user system))
 )
 
 ;system-add-chatbot: Función que añade chatbots a un sistema existente
@@ -122,6 +139,14 @@
               system))
       (display "No se pudo añadir usuario")
   )
+)
+
+;system-update-user: Actualiza al usuario activo en el sistema
+;Dominio: system X user
+;Recorrido: system
+(define (system-update-user system user)
+  (list (system-name system) (system-cblink system) (system-chatbots system)
+        (system-users system) user)
 )
 
 ;---------------------Otras funciones---------------------
@@ -179,25 +204,24 @@
 ;Dominio: system X mensaje (string)
 ;Recorrido: system
 (define system-talk-norec
-  (lambda (sys mens)
-    (if (system-logged? sys) ;Se comprueba si hay una sesión iniciada
-        (let ([opt (flow-talk-op (chatbot-talk-flow (system-talk-cb sys)) mens)])
-        opt)
-        sys) ;solo es posible conversar si hay una sesión iniciada
+  (lambda (system mens)
+    (if (system-logged? system) ;Se comprueba si hay una sesión iniciada
+        (let ([opt (system-talk-op system mens)])
+          (if (null? opt)
+              (system-update-user system
+                                  (user-add-talk
+                                   (system-logged-user system) (system-cblink system)
+                                   (flow-id (system-talk-flow system)) mens))
+              (list (system-name system) (option-cblink opt) (system-chatbots system)
+                      (system-users system) (user-add-talk
+                                             (system-logged-user system) (option-cblink opt)
+                                             (option-flink opt) mens)
+              )
+           )
+        )
+        system) ;solo es posible conversar si hay una sesión iniciada
   )
 )
-
-;system-id-mens: a partir de un mensaje de usuario, identifica a cual op de las existentes pertenece
-;Dominio: system X mens (string)
-;Recorrido: option-id (int) X flow-id (int) X chatbot-id (int)
-(define (system-id-mens system mens)
-  1)
-
-
-
-
-
-
 
 ;Ejemplo de un sistema de chatbots basado en el esquema del enunciado general
 ;Chabot0
@@ -246,3 +270,9 @@
 (define s10 (system-login s9 "user2"))
 
 (define s11 (system-talk-norec s10 "hola"))
+(define s12 (system-talk-norec s11 "1"))
+(define s13 (system-talk-norec s12 "1"))
+(define s14 (system-talk-norec s13 "Museo"))
+(define s15 (system-talk-norec s14 "1"))
+(define s16 (system-talk-norec s15 "3"))
+(define s17 (system-talk-norec s16 "5"))

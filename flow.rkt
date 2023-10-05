@@ -55,15 +55,16 @@
 ;Recorrido: lista de opciones (list)
 (define flow-options (lambda (flow) (caddr flow)))
 
-;flow-talk-op: selecciona una opcion del flujo a partir de un mensaje dado, ya sea como string
-;o como entero
-;Dominio: flow X op (int or string)
+;flow-talk-op: selecciona una opcion del flujo a partir de un mensaje dado, ya sea como entero
+;o como string (convertido a lowercase)
+;Dominio: flow X op (string)
 ;Recorrido: option
 (define (flow-talk-op fl mens)
-  (cond [(string? mens)
-         (car (filter (lambda (op) (member mens (option-keys op))) (flow-options fl)))]
-        [(integer? mens)
-         (car (filter (lambda (op) (= mens (option-code op))) (flow-options fl)))]
+  (if (string->number mens)
+      (let ([opt (filter (lambda (op) (= (string->number mens) (option-code op))) (flow-options fl))])
+           (if (null? opt) null (car opt)))
+      (let ([opt (filter (lambda (op) (member (string-downcase mens) (option-keys op))) (flow-options fl))])
+           (if (null? opt) null (car opt)))
         )
 )
 

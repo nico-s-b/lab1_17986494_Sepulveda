@@ -2,6 +2,7 @@
 
 (provide user)
 (provide user-insystem)
+(provide user-add-talk)
 (require "chathistory.rkt")
 
 ;TDA user
@@ -36,5 +37,15 @@
     (if (not (null? maybeuser))
         (car maybeuser)
         '())
+  )
+)
+
+;---------------------Modificadores---------------------
+;user-add-talk: agrega una entrada al chatHistory del usuario
+;Dominio: user X cblink (int) X flink (int) X mens (int OR string)
+;Recorrido: user
+(define user-add-talk
+  (lambda (usuario cblink flink mens)
+    (list (user-name usuario) (chatH-add (user-chat usuario) cblink flink mens))
   )
 )
