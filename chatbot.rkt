@@ -85,15 +85,20 @@
 ;;;Dominio: chatbot X flow
 ;;;Recorrido: chatbot
 ;Recursión: de cola
-;Función aplica recursión natural para verificar la no repitencia del id de flow en la lista de flows
-;existentes y lo añade si no está previamente. En caso contrario, devuelve los flows originales.
-;Recursión de cola se propone por una sintaxis "natural" para el procedimiento, a partir de la idea de
-;verificar elemento a elemento de la lista si hay duplicación de id, continuando con el resto de la lista en cada llamado recursivo.
+;Función aplica recursión natural para verificar la no repitencia del id de flow en la lista de
+;flows existentes y lo añade si no está previamente. En caso contrario, devuelve los flows originales.
+;Recursión de cola se propone por una sintaxis "natural" para el procedimiento, a partir
+;de la idea de verificar elemento a elemento de la lista si hay duplicación de id, continuando
+;con el resto de la lista en cada llamado recursivo.
 (define (chatbot-add-flow chatbot flow)
   (define (add-flows-aux flows flow)
-   (cond [(null? flows) (list flow)] ;caso base 1: agregar si no hay opciones
-        [(equal? (flow-id (car flows)) (flow-id flow)) flows] ;caso base 2: retornar chatbot sin cambios si flow tiene id repetido existente
-        [else (cons (car flows) (add-flows-aux (cdr flows) flow))]) ;llamada recursiva: se mantiene el primer elemento y se continúa la recursión con el resto
+   (cond
+     ;caso base 1: agregar si no hay opciones
+     [(null? flows) (list flow)]
+     ;caso base 2: retornar chatbot sin cambios si flow tiene id repetido existente
+     [(equal? (flow-id (car flows)) (flow-id flow)) flows]
+     ;llamada recursiva: se mantiene el primer elemento y se continúa la recursión con el resto
+     [else (cons (car flows) (add-flows-aux (cdr flows) flow))]) 
    )
   (list (chatbot-id chatbot) (chatbot-name chatbot) (chatbot-welcome chatbot)
         (chatbot-flowid chatbot) (add-flows-aux (chatbot-flows chatbot) flow))

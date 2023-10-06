@@ -1,8 +1,11 @@
 #lang racket
 
 (provide user)
+(provide user-name)
+(provide user-chat)
 (provide user-insystem)
 (provide user-add-talk)
+(provide user-chat-format)
 (require "chathistory.rkt")
 
 ;TDA user
@@ -48,4 +51,12 @@
   (lambda (usuario cblink flink mens)
     (list (user-name usuario) (chatH-add (user-chat usuario) cblink flink mens))
   )
+)
+
+;---------------------Otras funciones---------------------
+;user-chat-format
+;Dominio: user
+;Recorrido: string
+(define (user-chat-format user)
+  (chat-format (user-chat user))
 )

@@ -12,6 +12,7 @@
 (require "flow.rkt")
 (require "chatbot.rkt")
 (require "user.rkt")
+(require "chathistory.rkt")
 
 ;TDA system
 
@@ -66,6 +67,14 @@
   (if (>= (length sys) 4) (cadddr sys) null)
 )
 
+;system-get-user: devuelve un usuario a partir de su nombre, en caso de estar registrado
+;Dominio: system X username (string)
+;Recorrido: user
+(define (system-get-user system username)
+  (let ([maybeuser (filter (lambda (user) (equal? username (user-name user))) (system-users system))])
+    (if (null? maybeuser) null (car maybeuser)))
+)
+
 ;system-logged-user: selecciona el usuario actualmente registrado en el sistema, solo si existe
 ;Dominio: system
 ;Recorrido: user
@@ -95,7 +104,7 @@
 ;Dominio: system X mensaje (string)
 ;Recorrido: option
 (define system-talk-op
-  (lambda (system mens)
+  (lambda (system mens)           
     (flow-talk-op (system-talk-flow system) mens)
   )
 )
@@ -133,7 +142,7 @@
       (if (= (length system) 3) ;si aún no se ha agregado ningún usuario, agregar uno
           (list (system-name system) (system-cblink system)
                 (system-chatbots system) (list (user newUser)))
-          (if (null? (user-insystem newUser (system-users system)))
+          (if (null? (user-insystem newUser (system-users system))) ;Buscar si usuario ya está registrado
               (list (system-name system) (system-cblink system)
                     (system-chatbots system) (append (system-users system) (list (user newUser))))
               system))
@@ -157,16 +166,18 @@
 ;;;Recorrido: system
 (define (system-login system user)
   (if (and (system? system) (string? user))
-      (if (not (system-logged? system))  ;si system tiene menos de 5 elementos, no hay una sesión iniciada
-          (if (not (null? (user-insystem user (system-users system)))) ;comprobar si el usuario está registrado en el sistema  
-              (append system (list (user-insystem user (system-users system))))         ;si no hay una sesión, añade el usuario al final de system como señal de inicio de sesión
+      (if (not (system-logged? system))  ;si system tiene menos de 5 elementos, no hay sesión iniciada
+          ;comprobar si el usuario está registrado en el sistema  
+          (if (not (null? (user-insystem user (system-users system))))
+              ;si no hay una sesión, añade el usuario al final de system como señal sesión iniciada
+              (append system (list (user-insystem user (system-users system))))         
               system)
           system
        )
       (display "Error al intentar iniciar sesión"))
 )
 
-;system-logged?: función que indica si hay una sesión iniciada o no. Lo hace comprobando el tamaño de system
+;system-logged?: función que indica si hay una sesión iniciada o no, comprobando el tamaño de system
 ;Dominio: system
 ;Recorrido: boolean
 (define (system-logged? system)
@@ -181,45 +192,97 @@
 (define system-logout
   (lambda (system)
     (if (system? system)
-        (if (system-logged? system)  ;comprueba si hay sesión iniciada (system tiene al menos 5 elementos)
+        (if (system-logged? system)  ;comprueba si hay sesión iniciada
             (list (system-name system) (system-cblink system)
-                  (system-chatbots system) (system-users system))
+                  (system-chatbots system) (system-users system)) ;retorna system sin usuario loggeado
             system)
         (display "No se realiza acción logout. Sistema no válido"))
 ))
 
 ;system-talk-rec
-;Dominio: system X mensaje (string)
+;Dominio: system X mensajes* (string)
 ;Recorrido: system
+;Recursión: Natural
+;Función que permite interactuar con un chatbot. Utiliza recursión natural, teniendo como caso base
+;cuando no hay mensaje con el que interactuar.
+;Los casos recursivos se dividen en si el mensaje dado está asociado a una opción vigente o no.
+;Se utiliza recursión natural puesto que presenta una forma clara de realizar los retornos de la
+;función en el caso base, ya que dada la naturaleza de system no se requiere un acumulador, pues
+;es una lista de tamaño fijo que puede actualizar sus elementos y basta con devolver el sistema
+;original en el caso base. 
+;La imlpementación recursiva es tal que puede manejar más de un mensaje a la vez, pero funciona
+;exactamente igual que system-talk-norec cuando es llamada con un solo mensaje.
 (define system-talk-rec
-  (lambda (system mens)
-    (if (system-logged? system) ;Se comprueba si hay una sesión iniciada
-        (1)
-        system) ;solo es posible conversar si hay una sesión iniciada
+  (lambda (system . mens)
+    (if (not (system-logged? system))            ;Comprobación de inicio de sesión
+        system
+        (cond
+          ;Caso base: llamado a la función sin mensaje
+          [(or (null? mens) (null? (car mens))) system]
+          ;Caso recursivo 1: mensaje no asociado a opción
+          [(or (null? (system-talk-op system (car mens))))     
+           (let ([updated-system (system-update-user system
+                               (user-add-talk (system-logged-user system) (system-cblink system)
+                                              (flow-id (system-talk-flow system)) (car mens)))])
+             ;Llamado recursivo a system-talk-rec con el sistema actualizado y resto de mensajes
+           (apply system-talk-rec updated-system (cdr mens)))]
+      
+          [else
+            ;Caso recursivo 2: mensaje asociado a opción
+           (let ([opt (system-talk-op system (car mens))])
+             (let ([updated-system (list (system-name system) (option-cblink opt)
+                                         (system-chatbots system) (system-users system)
+                                         (user-add-talk (system-logged-user system) (option-cblink opt)
+                                                        (option-flink opt) (car mens)))])
+               ;Llamado recursivo a system-talk-rec con el sistema actualizado y resto de mensajes
+               (apply system-talk-rec updated-system (cdr mens))))]   
+        )
+    )
   )
 )
-
 
 ;system-talk-norec
 ;Dominio: system X mensaje (string)
 ;Recorrido: system
+;Función que permite interactuar con un chatbot. Verifica si hay una sesión activa, y de acuerdo
+;al mensaje dado, verifica si pertenece a alguna opción del flujo actual del chatbot activo.
+;En base a esto, devuelve el systema con las actualizaciones necesarias, ya sea de cambio en el
+;chatbot activo y con la actualización en el historial de chat del usuario acorde.
 (define system-talk-norec
   (lambda (system mens)
-    (if (system-logged? system) ;Se comprueba si hay una sesión iniciada
-        (let ([opt (system-talk-op system mens)])
-          (if (null? opt)
-              (system-update-user system
-                                  (user-add-talk
-                                   (system-logged-user system) (system-cblink system)
-                                   (flow-id (system-talk-flow system)) mens))
-              (list (system-name system) (option-cblink opt) (system-chatbots system)
-                      (system-users system) (user-add-talk
-                                             (system-logged-user system) (option-cblink opt)
-                                             (option-flink opt) mens)
+    (if (not (system-logged? system)) ;Se comprueba si hay una sesión iniciada
+        system                        ;solo es posible conversar si hay una sesión iniciada
+        (let ([opt (system-talk-op system mens)]) 
+          (if (null? opt)             ;se comprueba si hay una opción asociada al mensaje
+              (system-update-user system (user-add-talk
+                                                      (system-logged-user system)
+                                                      (system-cblink system)
+                                                      (flow-id (system-talk-flow system))
+                                                      mens)
+              )
+              (list (system-name system)
+                    (option-cblink opt)    ;Actualización de chatbotCodeLink en caso derivación a otro
+                    (system-chatbots system)
+                    (system-users system)
+                    (user-add-talk        ;Actualizar usuario
+                                 (system-logged-user system)
+                                 (option-cblink opt)
+                                 (option-flink opt)
+                                 mens)
               )
            )
         )
-        system) ;solo es posible conversar si hay una sesión iniciada
+     )
+  )
+)
+
+;system-synthesis: ofrece una síntesis del chatHistory de un usuario particular para su
+;visualización formateada mediante display
+;Dominio: system X user (string)
+;Recorrido: string
+(define system-synthesis
+  (lambda (system user)
+    (chat-format (user-chat (system-get-user user)))
   )
 )
 
@@ -260,14 +323,17 @@
 (define s0 (system "Chatbots Paradigmas" 0 cb0 cb0 cb0 cb1 cb2))
 (define s1 (system-add-chatbot s0 cb0)) ;igual a s0
 (define s2 (system-add-user s1 "user1"))
-(define s3 (system-add-user s2 "user2"))
-(define s4 (system-add-user s3 "user2"))
-(define s5 (system-add-user s4 "user3"))
-(define s6 (system-login s5 "user8"))
-(define s7 (system-login s6 "user1"))
-(define s8 (system-login s7 "user2"))
-(define s9 (system-logout s8))
-(define s10 (system-login s9 "user2"))
+(define s10 (system-login s2 "user1"))
+
+(define s18 (system-talk-rec s10 "hola" "1" "1" "Museo" "1" "3" "5"))
+
+;(define s11 (system-talk-rec s10 "hola"))
+;(define s12 (system-talk-rec s11 "1"))
+;(define s13 (system-talk-rec s12 "1"))
+;(define s14 (system-talk-rec s13 "Museo"))
+;(define s15 (system-talk-rec s14 "1"))
+;(define s16 (system-talk-rec s15 "3"))
+;(define s17 (system-talk-rec s16 "5"))
 
 (define s11 (system-talk-norec s10 "hola"))
 (define s12 (system-talk-norec s11 "1"))
