@@ -27,5 +27,7 @@
 ;Dominio: chatH
 ;Recorrido: string
 (define (chat-format chatH)
-  chatH
+  (car chatH)
 )
+
+(define ch '("user2" '(0 1 "hola") '(1 1 "1") '(1 2 "1") '(1 1 "Museo") '(1 2 "1") '(1 1 "3") '(1 1 "5")))

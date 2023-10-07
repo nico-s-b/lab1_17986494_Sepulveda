@@ -25,7 +25,7 @@
   (if (and (string? name)
            (integer? initialChatbotCodeLink)
            (or (null? chatbots) (andmap chatbot? chatbots)))
-      (list name initialChatbotCodeLink (chatbots-rem-duplicates chatbots))
+      (list name initialChatbotCodeLink (chatbots-rem-duplicates chatbots) (current-seconds))
       (raise "Error al crear system")
    )
 )
@@ -35,7 +35,7 @@
 ;Dominio: system
 ;Recorrido: boolean
 (define (system? system)
-  (if (and (>= (length system) 2)
+  (if (and (>= (length system) 4)
            (string? (system-name system))
            (integer? (system-cblink system))
            (or (null? (system-chatbots system)) (andmap chatbot? (system-chatbots system))))
@@ -60,11 +60,14 @@
 ;Recorrido: lista de chatbots (list)
 (define system-chatbots caddr)
 
+;system-creationtime: selecciona el tiempo en el que fue creado el chatbot
+(define system-creationtime cadddr)
+
 ;system-users: selecciona los usuarios registrados en el sistema, solo si existen
 ;Dominio: system
 ;Recorrido: lista de users (list)
 (define (system-users sys)
-  (if (>= (length sys) 4) (cadddr sys) null)
+  (if (>= (length sys) 5) ((compose cadddr cdr) sys) null)
 )
 
 ;system-get-user: devuelve un usuario a partir de su nombre, en caso de estar registrado
@@ -79,7 +82,7 @@
 ;Dominio: system
 ;Recorrido: user
 (define (system-logged-user sys)
-  (if (= (length sys) 5) ((compose cadddr cdr) sys) null)
+  (if (= (length sys) 6) ((compose cadddr cddr) sys) null)
 )
 
 ;system-talk-cb: función que selecciona, dentro de los chatbots existentes, aquel activo
@@ -115,7 +118,7 @@
 ;Dominio: system X chatbot-id (int)
 ;Recorrido: system
 (define (system-change-chatbot new-cb-id)
-  (list (system-name system) new-cb-id (system-chatbots system)
+  (list (system-name system) new-cb-id (system-chatbots system) (system-creationtime system)
         (system-users system) (system-logged-user system))
 )
 
@@ -128,7 +131,8 @@
       (let ([cb-list (append (system-chatbots system) chatbots)])
         (list (system-name system)
               (system-cblink system)
-              (chatbots-rem-duplicates cb-list))
+              (chatbots-rem-duplicates cb-list)
+              (system-creationtime system))
        )
       (display "No se pudo añadir chatbot")
   )
@@ -139,12 +143,13 @@
 ;;;Recorrido: system
 (define (system-add-user system newUser)
   (if (system? system)
-      (if (= (length system) 3) ;si aún no se ha agregado ningún usuario, agregar uno
+      (if (= (length system) 4) ;si aún no se ha agregado ningún usuario, agregar uno
           (list (system-name system) (system-cblink system)
-                (system-chatbots system) (list (user newUser)))
+                (system-chatbots system) (system-creationtime system) (list (user newUser)))
           (if (null? (user-insystem newUser (system-users system))) ;Buscar si usuario ya está registrado
               (list (system-name system) (system-cblink system)
-                    (system-chatbots system) (append (system-users system) (list (user newUser))))
+                    (system-chatbots system) (system-creationtime system)
+                    (append (system-users system) (list (user newUser))))
               system))
       (display "No se pudo añadir usuario")
   )
@@ -155,9 +160,36 @@
 ;Recorrido: system
 (define (system-update-user system user)
   (list (system-name system) (system-cblink system) (system-chatbots system)
-        (system-users system) user)
+        (system-creationtime system) (system-users system) user)
 )
 
+;system-save-user: Actualiza usuario loggeado, guardando su nuevo estado dentro de la lista
+;de usuarios registrados. Usado para guardar el chatHistory de un usuario en el sistema
+;cuando este se desloggea del systema.
+;Dominio: system
+;Recorrido: users (lista de users del sistema)
+;Recursión: natural
+(define (system-update-userlist system)
+  (let ([userlist (system-users system)])
+      (define updating 
+        (lambda (lista)
+          (if (null? lista)       ;Caso base 1: lista de usuarios vacía
+              '()
+              (let ([user (system-logged-user system)])
+                (if (equal? (user-name user) (user-name (car lista)))
+                    ;Caso base 2: encontramos al usuario a reemplazar
+                    (cons user (cdr lista))
+                    ;Caso recursivo: seguir recorriendo la lista
+                    (cons (car lista) (updating (cdr lista)))
+                )
+              )
+            )
+          )
+        )
+      (updating (system-users system))
+  )
+)
+ 
 ;---------------------Otras funciones---------------------
 
 ;system-login: permite a un usuario iniciar sesión en el sistema si este está
@@ -181,7 +213,7 @@
 ;Dominio: system
 ;Recorrido: boolean
 (define (system-logged? system)
-  (if (>= (length system) 5)
+  (if (>= (length system) 6)
       #t
       #f)
 )
@@ -193,12 +225,18 @@
   (lambda (system)
     (if (system? system)
         (if (system-logged? system)  ;comprueba si hay sesión iniciada
-            (list (system-name system) (system-cblink system)
-                  (system-chatbots system) (system-users system)) ;retorna system sin usuario loggeado
-            system)
-        (display "No se realiza acción logout. Sistema no válido"))
+            ;retorna system sin usuario loggeado
+            (list (system-name system)
+                  (system-cblink system)
+                  (system-chatbots system)
+                  (system-creationtime system)
+                  ;actualizar estado de usuario activo en el sistema antes de cerrar sesión. De esta
+                  (system-update-userlist system)) ;forma, se guarda su actividad durante la sesión
+            system
+         )
+    (display "No se realiza acción logout. Sistema no válido"))
 ))
-
+ 
 ;system-talk-rec
 ;Dominio: system X mensajes* (string)
 ;Recorrido: system
@@ -210,7 +248,7 @@
 ;función en el caso base, ya que dada la naturaleza de system no se requiere un acumulador, pues
 ;es una lista de tamaño fijo que puede actualizar sus elementos y basta con devolver el sistema
 ;original en el caso base. 
-;La imlpementación recursiva es tal que puede manejar más de un mensaje a la vez, pero funciona
+;La implementación recursiva es tal que puede manejar más de un mensaje a la vez, pero funciona
 ;exactamente igual que system-talk-norec cuando es llamada con un solo mensaje.
 (define system-talk-rec
   (lambda (system . mens)
@@ -231,7 +269,8 @@
             ;Caso recursivo 2: mensaje asociado a opción
            (let ([opt (system-talk-op system (car mens))])
              (let ([updated-system (list (system-name system) (option-cblink opt)
-                                         (system-chatbots system) (system-users system)
+                                         (system-chatbots system) (system-creationtime system)
+                                         (system-users system)
                                          (user-add-talk (system-logged-user system) (option-cblink opt)
                                                         (option-flink opt) (car mens)))])
                ;Llamado recursivo a system-talk-rec con el sistema actualizado y resto de mensajes
@@ -263,6 +302,7 @@
               (list (system-name system)
                     (option-cblink opt)    ;Actualización de chatbotCodeLink en caso derivación a otro
                     (system-chatbots system)
+                    (system-creationtime system)
                     (system-users system)
                     (user-add-talk        ;Actualizar usuario
                                  (system-logged-user system)
@@ -276,13 +316,14 @@
   )
 )
 
-;system-synthesis: ofrece una síntesis del chatHistory de un usuario particular para su
-;visualización formateada mediante display
+;system-synthesis: ofrece una síntesis del chatHistory de un usuario particular registrado en el
+;sistema, entregando un string formateado que puede visualizarse mediante display.
+;La función chat-history (del TDA chathistory) realiza el trabajo de formateo de su contenido
 ;Dominio: system X user (string)
 ;Recorrido: string
 (define system-synthesis
   (lambda (system user)
-    (chat-format (user-chat (system-get-user user)))
+    (chat-format (user-chat (system-get-user system user)))
   )
 )
 
@@ -323,22 +364,31 @@
 (define s0 (system "Chatbots Paradigmas" 0 cb0 cb0 cb0 cb1 cb2))
 (define s1 (system-add-chatbot s0 cb0)) ;igual a s0
 (define s2 (system-add-user s1 "user1"))
-(define s10 (system-login s2 "user1"))
+(define s3 (system-add-user s2 "user2"))
+(define s4 (system-add-user s3 "user2"))
+(define s5 (system-add-user s4 "user3"))
+(define s6 (system-login s5 "user8"))
+(define s7 (system-login s6 "user1"))
+(define s8 (system-login s7 "user2"))
+(define s9 (system-logout s8))
+(define s10 (system-login s9 "user2"))
 
+(define s11 (system-talk-rec s10 "hola"))
+(define s12 (system-talk-rec s11 "1"))
+(define s13 (system-talk-rec s12 "1"))
+(define s14 (system-talk-rec s13 "Museo"))
+(define s15 (system-talk-rec s14 "1"))
+(define s16 (system-talk-rec s15 "3"))
+(define s17 (system-talk-rec s16 "5"))
+
+;(define s11 (system-talk-norec s10 "hola"))
+;(define s12 (system-talk-norec s11 "1"))
+;(define s13 (system-talk-norec s12 "1"))
+;(define s14 (system-talk-norec s13 "Museo"))
+;(define s15 (system-talk-norec s14 "1"))
+;(define s16 (system-talk-norec s15 "3"))
+;(define s17 (system-talk-norec s16 "5"))
+(display (system-synthesis s17 "user2"))
 (define s18 (system-talk-rec s10 "hola" "1" "1" "Museo" "1" "3" "5"))
-
-;(define s11 (system-talk-rec s10 "hola"))
-;(define s12 (system-talk-rec s11 "1"))
-;(define s13 (system-talk-rec s12 "1"))
-;(define s14 (system-talk-rec s13 "Museo"))
-;(define s15 (system-talk-rec s14 "1"))
-;(define s16 (system-talk-rec s15 "3"))
-;(define s17 (system-talk-rec s16 "5"))
-
-(define s11 (system-talk-norec s10 "hola"))
-(define s12 (system-talk-norec s11 "1"))
-(define s13 (system-talk-norec s12 "1"))
-(define s14 (system-talk-norec s13 "Museo"))
-(define s15 (system-talk-norec s14 "1"))
-(define s16 (system-talk-norec s15 "3"))
-(define s17 (system-talk-norec s16 "5"))
+(define s19 (system-logout s17))
+(define s20 (system-logout s18))
