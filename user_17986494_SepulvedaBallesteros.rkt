@@ -5,10 +5,11 @@
 (provide user-chat)
 (provide user-insystem)
 (provide user-add-talk)
-(provide user-chat-format)
-(require "chathistory.rkt")
+(require "chathistory_17986494_SepulvedaBallesteros.rkt")
 
 ;TDA user
+;Representación como una lista compuesta por:
+;name X chatHistory
 
 ;---------------------Constructor---------------------
 
@@ -51,12 +52,4 @@
   (lambda (usuario cblink flink mens)
     (list (user-name usuario) (chatH-add (user-chat usuario) cblink flink mens))
   )
-)
-
-;---------------------Otras funciones---------------------
-;user-chat-format
-;Dominio: user
-;Recorrido: string
-(define (user-chat-format user)
-  (chat-format (user-chat user))
 )

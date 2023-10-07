@@ -1,10 +1,6 @@
 #lang racket
 
-(require "option.rkt")
-(require "flow.rkt")
-(require "chatbot.rkt")
-(require "system.rkt")
-(require "user.rkt")
+(require "main_17986494_SepulvedaBallesteros.rkt")
 
 ;Ejemplo de un sistema de chatbots basado en el esquema del enunciado general
 ;Chabot0
@@ -53,11 +49,11 @@
 (define s10 (system-login s9 "user2"))
 
 (define s11 (system-talk-norec s10 "hola"))
-;(define s12 (system-talk-rec s11 "1"))
-;(define s13 (system-talk-rec s12 "1"))
-;(define s14 (system-talk-rec s13 "Museo"))
-;(define s15 (system-talk-rec s14 "1"))
-;(define s16 (system-talk-rec s15 "3"))
-;(define s17 (system-talk-rec s16 "5"))
-;(display (system-synthesis s17 "user2"))
+(define s12 (system-talk-rec s11 "1"))
+(define s13 (system-talk-rec s12 "1"))
+(define s14 (system-talk-rec s13 "Museo"))
+(define s15 (system-talk-rec s14 "1"))
+(define s16 (system-talk-rec s15 "3"))
+(define s17 (system-talk-rec s16 "5"))
+(display (system-synthesis s17 "user2"))
 ;(system-simulate s0 5 32131)

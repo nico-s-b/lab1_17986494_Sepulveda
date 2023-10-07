@@ -1,20 +1,44 @@
 #lang racket
 
 (provide system)
-(provide system-add-chatbot)
+(provide system-name)
+(provide system-cblink)
+(provide system-chatbots)
+(provide system-creationtime)
+(provide system-users)
+(provide system-get-user)
+(provide system-logged-user)
 (provide system-add-user)
+(provide system-add-chatbot)
+(provide system-logged?)
 (provide system-login)
 (provide system-logout)
+(provide system-update-userlist)
+(provide system-update-user)
 (provide system?)
+(provide system-talk-op)
+(provide system-talk-flow)
 (provide system-talk-norec)
+(provide system-talk-rec)
+(provide format-chat)
 
-(require "option.rkt")
-(require "flow.rkt")
-(require "chatbot.rkt")
-(require "user.rkt")
-(require "chathistory.rkt")
+(require "option_17986494_SepulvedaBallesteros.rkt")
+(require "flow_17986494_SepulvedaBallesteros.rkt")
+(require "chatbot_17986494_SepulvedaBallesteros.rkt")
+(require "user_17986494_SepulvedaBallesteros.rkt")
+(require "chathistory_17986494_SepulvedaBallesteros.rkt")
 
 ;TDA system
+;Representación de acuerdo a las operaciones que se hayan llevado a cabo:
+
+;Estado mínimo de system, sin usuarios aún registrados, recién creado:
+;name X initialChatbotCodeLink X *chatbots X init-time
+
+;Estado de system con usuarios registrados, sin sesión activa
+;name X initialChatbotCodeLink X *chatbots X init-time X *userlist
+
+;Estado de system con una sesión activa (y, por tanto, usuarios registrados)
+;name X initialChatbotCodeLink X *chatbots X init-time X *userlist X logged-user
 
 ;---------------------Constructor---------------------
 
@@ -122,35 +146,39 @@
         (system-users system) (system-logged-user system))
 )
 
-;system-add-chatbot: Función que añade chatbots a un sistema existente
+;system-add-chatbot: Función que añade chatbots a un sistema existente. No utiliza recursión. Puede
+;añadir uno o más chatbots correctamente
 ;;;Dominio: system X chatbot
 ;;;Recorrido: system
 (define (system-add-chatbot system . chatbots)
-  (if (and (system? system)
-           (andmap chatbot? chatbots))
+  (if (and (system? system)                      ;verificación de la validez de los argumentos
+           (andmap chatbot? chatbots))    
       (let ([cb-list (append (system-chatbots system) chatbots)])
         (list (system-name system)
               (system-cblink system)
-              (chatbots-rem-duplicates cb-list)
+              (chatbots-rem-duplicates cb-list)     ;evita duplicación de chatbots
               (system-creationtime system))
        )
       (display "No se pudo añadir chatbot")
   )
 )
 
-;system-add-user: Añade un usuario al sistema
+;system-add-user: Añade un usuario al sistema, siempre que éste no esté previamente registrado
 ;;;Dominio: system X newUser (string)
 ;;;Recorrido: system
 (define (system-add-user system newUser)
   (if (system? system)
       (if (= (length system) 4) ;si aún no se ha agregado ningún usuario, agregar uno
+          ;recostruir lista "system" agregando nuevo listado para users
           (list (system-name system) (system-cblink system)
                 (system-chatbots system) (system-creationtime system) (list (user newUser)))
-          (if (null? (user-insystem newUser (system-users system))) ;Buscar si usuario ya está registrado
+          ;Si ya hay una lista de usuarios, primero se busca si ya existe usuario registrado
+          (if (null? (user-insystem newUser (system-users system)))
+              ;Si no está registrado, se reconstruye sistema agregando el nuevo usuario a userlist
               (list (system-name system) (system-cblink system)
                     (system-chatbots system) (system-creationtime system)
                     (append (system-users system) (list (user newUser))))
-              system))
+              system))    ;Si ya está registrado, se retorna sistema sin cambios
       (display "No se pudo añadir usuario")
   )
 )
@@ -160,7 +188,7 @@
 ;Recorrido: system
 (define (system-update-user system user)
   (list (system-name system) (system-cblink system) (system-chatbots system)
-        (system-creationtime system) (system-users system) user)
+        (system-creationtime system) (system-update-userlist system) user)
 )
 
 ;system-save-user: Actualiza usuario loggeado, guardando su nuevo estado dentro de la lista
@@ -193,12 +221,12 @@
 ;---------------------Otras funciones---------------------
 
 ;system-login: permite a un usuario iniciar sesión en el sistema si este está
-;previamente registrado y si no se encuentra una sesión iniciada
+;previamente registrado y si no se encuentra una sesión iniciada ya en el sistema
 ;;;Dominio: system X user (string)
 ;;;Recorrido: system
 (define (system-login system user)
   (if (and (system? system) (string? user))
-      (if (not (system-logged? system))  ;si system tiene menos de 5 elementos, no hay sesión iniciada
+      (if (not (system-logged? system))  ;system-logged utiliza lentgh de sistema para verificar sesión inicada
           ;comprobar si el usuario está registrado en el sistema  
           (if (not (null? (user-insystem user (system-users system))))
               ;si no hay una sesión, añade el usuario al final de system como señal sesión iniciada
@@ -218,7 +246,8 @@
       #f)
 )
 
-;system-logout: cierra una sesión abierta por un usuario si hay una activa
+;system-logout: cierra una sesión abierta por un usuario si hay una activa. Al cerrar la sesión
+;se guarda el contenido del chathistory generado en la lista de usuarios del sistema
 ;;;Dominio: system
 ;;;Recorrido: system
 (define system-logout
@@ -227,7 +256,7 @@
         (if (system-logged? system)  ;comprueba si hay sesión iniciada
             ;retorna system sin usuario loggeado
             (list (system-name system)
-                  (system-cblink system)
+                  0                      ;Al cerrar sesión, se vuelve al chatbot inicial
                   (system-chatbots system)
                   (system-creationtime system)
                   ;actualizar estado de usuario activo en el sistema antes de cerrar sesión. De esta
@@ -235,7 +264,8 @@
             system
          )
     (display "No se realiza acción logout. Sistema no válido"))
-))
+  )
+)
  
 ;system-talk-rec
 ;Dominio: system X mensajes* (string)
@@ -270,7 +300,7 @@
            (let ([opt (system-talk-op system (car mens))])
              (let ([updated-system (list (system-name system) (option-cblink opt)
                                          (system-chatbots system) (system-creationtime system)
-                                         (system-users system)
+                                         (system-update-userlist system)
                                          (user-add-talk (system-logged-user system) (option-cblink opt)
                                                         (option-flink opt) (car mens)))])
                ;Llamado recursivo a system-talk-rec con el sistema actualizado y resto de mensajes
@@ -303,7 +333,7 @@
                     (option-cblink opt)    ;Actualización de chatbotCodeLink en caso derivación a otro
                     (system-chatbots system)
                     (system-creationtime system)
-                    (system-users system)
+                    (system-update-userlist system)
                     (user-add-talk        ;Actualizar usuario
                                  (system-logged-user system)
                                  (option-cblink opt)
@@ -318,77 +348,58 @@
 
 ;system-synthesis: ofrece una síntesis del chatHistory de un usuario particular registrado en el
 ;sistema, entregando un string formateado que puede visualizarse mediante display.
-;La función chat-history (del TDA chathistory) realiza el trabajo de formateo de su contenido
+;La función format-chat realiza el trabajo de formateo de su contenido
 ;Dominio: system X user (string)
 ;Recorrido: string
-(define system-synthesis
+(define system-synthesis 
   (lambda (system user)
-    (chat-format (user-chat (system-get-user system user)))
+    (if (system-logged? system)
+        ;Antes de proceder al formateo, actualiza el estado del usuario con su última interacción
+        ;si el usuario aún no cierra sesión
+        (let ([updated-sys (system-update-user system (user-name (system-logged-user system)))])
+          (format-chat user updated-sys (user-chat (system-get-user updated-sys user)))
+          )
+        ;En caso de no haber sesión iniciada, el chatHistory ya fue guardado completamente
+        (format-chat user system (user-chat (system-get-user system user)))
+    )
   )
 )
 
-;Ejemplo de un sistema de chatbots basado en el esquema del enunciado general
-;Chabot0
-(define op1 (option  1 "1) Viajar" 1 1 "viajar" "turistear" "conocer"))
-(define op2 (option  2 "2) Estudiar" 2 1 "estudiar" "aprender" "perfeccionarme"))
-(define f10 (flow 1 "Flujo Principal Chatbot 1\nBienvenido\n¿Qué te gustaría hacer?" op1 op2 op2 op2 op2 op1)) ;solo añade una ocurrencia de op2
-(define f11 (flow-add-option f10 op1)) ;se intenta añadir opción duplicada            
-(define cb0 (chatbot 0 "Inicial" "Bienvenido\n¿Qué te gustaría hacer?" 1 f10 f10 f10 f10))  ;solo añade una ocurrencia de f10
-;Chatbot1
-(define op3 (option 1 "1) New York, USA" 1 2 "USA" "Estados Unidos" "New York"))
-(define op4 (option 2 "2) París, Francia" 1 1 "Paris" "Eiffel"))
-(define op5 (option 3 "3) Torres del Paine, Chile" 1 1 "Chile" "Torres" "Paine" "Torres Paine" "Torres del Paine"))
-(define op6 (option 4 "4) Volver" 0 1 "Regresar" "Salir" "Volver"))
-;Opciones segundo flujo Chatbot1
-(define op7 (option 1 "1) Central Park" 1 2 "Central" "Park" "Central Park"))
-(define op8 (option 2 "2) Museos" 1 2 "Museo"))
-(define op9 (option 3 "3) Ningún otro atractivo" 1 3 "Museo"))
-(define op10 (option 4 "4) Cambiar destino" 1 1 "Cambiar" "Volver" "Salir")) 
-(define op11 (option 1 "1) Solo" 1 3 "Solo")) 
-(define op12 (option 2 "2) En pareja" 1 3 "Pareja"))
-(define op13 (option 3 "3) En familia" 1 3 "Familia"))
-(define op14 (option 4 "4) Agregar más atractivos" 1 2 "Volver" "Atractivos"))
-(define op15 (option 5 "5) En realidad quiero otro destino" 1 1 "Cambiar destino"))
-(define f20 (flow 1 "Flujo 1 Chatbot1\n¿Dónde te Gustaría ir?" op3 op4 op5 op6))
-(define f21 (flow 2 "Flujo 2 Chatbot1\n¿Qué atractivos te gustaría visitar?" op7 op8 op9 op10))
-(define f22 (flow 3 "Flujo 3 Chatbot1\n¿Vas solo o acompañado?" op11 op12 op13 op14 op15))
-(define cb1 (chatbot 1 "Agencia Viajes"  "Bienvenido\n¿Dónde quieres viajar?" 1 f20 f21 f22))
-;Chatbot2
-(define op16 (option 1 "1) Carrera Técnica" 2 1 "Técnica"))
-(define op17 (option 2 "2) Postgrado" 2 1 "Doctorado" "Magister" "Postgrado"))
-(define op18 (option 3 "3) Volver" 0 1 "Volver" "Salir" "Regresar"))
-
-(define f30 (flow 1 "Flujo 1 Chatbot2\n¿Qué te gustaría estudiar?" op16 op17 op18))
-(define cb2 (chatbot 2 "Orientador Académico"  "Bienvenido\n¿Qué te gustaría estudiar?" 1 f30))
-;Sistema
-(define s0 (system "Chatbots Paradigmas" 0 cb0 cb0 cb0 cb1 cb2))
-(define s1 (system-add-chatbot s0 cb0)) ;igual a s0
-(define s2 (system-add-user s1 "user1"))
-(define s3 (system-add-user s2 "user2"))
-(define s4 (system-add-user s3 "user2"))
-(define s5 (system-add-user s4 "user3"))
-(define s6 (system-login s5 "user8"))
-(define s7 (system-login s6 "user1"))
-(define s8 (system-login s7 "user2"))
-(define s9 (system-logout s8))
-(define s10 (system-login s9 "user2"))
-
-(define s11 (system-talk-rec s10 "hola"))
-(define s12 (system-talk-rec s11 "1"))
-(define s13 (system-talk-rec s12 "1"))
-(define s14 (system-talk-rec s13 "Museo"))
-(define s15 (system-talk-rec s14 "1"))
-(define s16 (system-talk-rec s15 "3"))
-(define s17 (system-talk-rec s16 "5"))
-
-;(define s11 (system-talk-norec s10 "hola"))
-;(define s12 (system-talk-norec s11 "1"))
-;(define s13 (system-talk-norec s12 "1"))
-;(define s14 (system-talk-norec s13 "Museo"))
-;(define s15 (system-talk-norec s14 "1"))
-;(define s16 (system-talk-norec s15 "3"))
-;(define s17 (system-talk-norec s16 "5"))
-(display (system-synthesis s17 "user2"))
-(define s18 (system-talk-rec s10 "hola" "1" "1" "Museo" "1" "3" "5"))
-(define s19 (system-logout s17))
-(define s20 (system-logout s18))
+;format-chat: función que formatea un chatHistory para formar un string visualizable con display.
+;Utiliza recursión natural, construyendo el string recursivamente y entregando un string vacío ""
+;en su caso base. Se prefiere por sobre la recursión de cola dado que, de esta forma, resulta
+;más clara la concatenación de los distintos llamados de la función, que retorna en cada caso un
+;string de un flujo que van sucediéndose uno bajo otro.
+;Dominio: chatH
+;Recorrido: string
+;Recursión: natural
+(define format-chat
+  (lambda (user system chatH)
+    (display chatH)
+    (display "\n")
+    (if (= (length chatH) 1)  ;Caso base: se agotaron los elementos del chatHistory (solo queda el nombre de ususario
+        ""
+        ;Definiciones: elemento del chathistory, chatbot y flujo asociados al elemento
+        (let* ([chatElem (cadr chatH)]
+               [actual-cbot (car (filter (lambda (cb) (equal? (chat-cb chatElem) (chatbot-id cb)))
+                                         (system-chatbots system)))]
+               [actual-flow (car (filter (lambda (fl) (equal? (chat-fl chatElem) (flow-id fl)))
+                                         (chatbot-flows actual-cbot)))])
+          (string-append        ;Contatenación de la recursión
+           (string-join         ;Concatenación que construye un flujo en particular
+            (list (string-append (number->string (chat-time chatElem)) " - "
+                                (string-append user ": " (chat-mess chatElem)))
+                  (string-append (number->string (system-creationtime system)) " - "
+                                (chatbot-name actual-cbot) ": "
+                                (flow-name actual-flow))
+                  (string-join (map option-message (flow-options actual-flow)) "\n")
+                  )
+           "\n"
+           )
+          "\n\n"
+          (format-chat user system (append (list user)(cddr chatH)))    ;Llamado recursivo
+          )
+       )
+    )
+  )
+)

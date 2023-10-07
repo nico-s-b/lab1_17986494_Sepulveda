@@ -2,15 +2,20 @@
 
 (provide chatbot)
 (provide chatbot?)
+(provide chatbot-name)
 (provide chatbot-add-flow)
+(provide chatbot-welcome)
+(provide chatbot-flowid)
 (provide chatbots-rem-duplicates)
 (provide chatbot-flows)
 (provide chatbot-id)
 (provide chatbot-talk-flow)
-(require "option.rkt")
-(require "flow.rkt")
+(require "flow_17986494_SepulvedaBallesteros.rkt")
 
 ;TDA chatbot
+
+;Representación: lista formada por
+; chatbotID X name X welcomeMessage X initialFlowCode X *flows
 
 ;---------------------Constructor---------------------
 
@@ -79,21 +84,23 @@
 (define (chatbot-talk-flow cbot)
   (car (filter (lambda (fl) (= (chatbot-flowid cbot) (flow-id fl))) (chatbot-flows cbot)))
 )
+
 ;---------------------Modificadores---------------------
 
 ;chatbot-add-flow
 ;;;Dominio: chatbot X flow
 ;;;Recorrido: chatbot
-;Recursión: de cola
+;Recursión: natural
 ;Función aplica recursión natural para verificar la no repitencia del id de flow en la lista de
 ;flows existentes y lo añade si no está previamente. En caso contrario, devuelve los flows originales.
-;Recursión de cola se propone por una sintaxis "natural" para el procedimiento, a partir
+;Recursión natural se propone por una sintaxis "natural" para el procedimiento, a partir
 ;de la idea de verificar elemento a elemento de la lista si hay duplicación de id, continuando
-;con el resto de la lista en cada llamado recursivo.
+;con el resto de la lista en cada llamado recursivo, además de construir la lista incluyendo
+;el resultado recursivo con el llamado recursivo dentro de la operación cons / list
 (define (chatbot-add-flow chatbot flow)
   (define (add-flows-aux flows flow)
    (cond
-     ;caso base 1: agregar si no hay opciones
+     ;caso base 1: agregar si no hay flujos
      [(null? flows) (list flow)]
      ;caso base 2: retornar chatbot sin cambios si flow tiene id repetido existente
      [(equal? (flow-id (car flows)) (flow-id flow)) flows]

@@ -6,9 +6,12 @@
 (provide option-keys)
 (provide option-cblink)
 (provide option-flink)
+(provide option-message)
 (provide options-rem-duplicates)
 
 ;TDA option
+;Representación compuesta por una lista formada por:
+;code X message X chatbotcodelink X flowcodelink X *keys
 
 ;---------------------Constructor---------------------
 

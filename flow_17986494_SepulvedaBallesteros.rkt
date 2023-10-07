@@ -3,12 +3,16 @@
 (provide flow)
 (provide flow?)
 (provide flow-id)
+(provide flow-name)
+(provide flow-options)
 (provide flow-add-option)
 (provide flows-rem-duplicates)
 (provide flow-talk-op)
-(require "option.rkt")
+(require "option_17986494_SepulvedaBallesteros.rkt")
 
 ;TDA flow
+;Representación mediante una lista formada por:
+;id X name X *options
 
 ;---------------------Constructor---------------------
 
@@ -70,7 +74,7 @@
 
 ;---------------------Modificadores---------------------
 
-;flow-add-option: añade una opción a un flujo ya existente.
+;flow-add-option: añade una opción a un flujo ya existente. Implementación no recursiva
 ;;;Dominio: flow X option
 ;;;Recorrido: flow
 (define (flow-add-option flow . new-options)
