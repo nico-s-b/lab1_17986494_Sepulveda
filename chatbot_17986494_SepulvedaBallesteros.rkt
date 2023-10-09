@@ -111,14 +111,6 @@
         (chatbot-flowid chatbot) (add-flows-aux (chatbot-flows chatbot) flow))
 )
 
-;chatbot-change-flow: cambia el flow actual del chatbot dado un nuevo flow-id
-;Dominio: chatbot X flow-id (int)
-;Recorrido: chatbot
-(define (chatbot-change-flow cbot new-fl-id)
-  (list (chatbot-id cbot) (chatbot-name cbot) (chatbot-welcome cbot)
-        new-fl-id (chatbot-flows cbot))
-)
-
 ;---------------------Otras funciones---------------------
 
 ;chatbots-rem-duplicates: remueve chatbots duplicados de una lista de chatbot en base

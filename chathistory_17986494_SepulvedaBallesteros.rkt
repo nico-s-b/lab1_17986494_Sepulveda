@@ -52,11 +52,3 @@
   (cons (car chatH) (append (cdr chatH) (list (list cblink flowlink message (current-seconds) )))
   )
 )
-
-;---------------------Otras funciones---------------------
-;chat-format: formatea un chatHistory para su visualización
-;Dominio: chatH
-;Recorrido: string
-(define (chat-format chatH)
-  (car chatH)
-)

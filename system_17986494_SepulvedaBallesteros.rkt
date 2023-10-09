@@ -138,14 +138,6 @@
 
 ;---------------------Modificadores---------------------
 
-;system-change-chatbot: función que modifica el chatbot activo actual del sistema
-;Dominio: system X chatbot-id (int)
-;Recorrido: system
-(define (system-change-chatbot new-cb-id)
-  (list (system-name system) new-cb-id (system-chatbots system) (system-creationtime system)
-        (system-users system) (system-logged-user system))
-)
-
 ;system-add-chatbot: Función que añade chatbots a un sistema existente. No utiliza recursión. Puede
 ;añadir uno o más chatbots correctamente
 ;;;Dominio: system X chatbot
@@ -191,7 +183,7 @@
         (system-creationtime system) (system-update-userlist system) user)
 )
 
-;system-save-user: Actualiza usuario loggeado, guardando su nuevo estado dentro de la lista
+;system-update-userlist: Actualiza usuario loggeado, guardando su nuevo estado dentro de la lista
 ;de usuarios registrados. Usado para guardar el chatHistory de un usuario en el sistema
 ;cuando este se desloggea del systema.
 ;Dominio: system
@@ -375,8 +367,6 @@
 ;Recursión: natural
 (define format-chat
   (lambda (user system chatH)
-    (display chatH)
-    (display "\n")
     (if (= (length chatH) 1)  ;Caso base: se agotaron los elementos del chatHistory (solo queda el nombre de ususario
         ""
         ;Definiciones: elemento del chathistory, chatbot y flujo asociados al elemento
