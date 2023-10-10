@@ -1,1 +1,0 @@
-("8.10" ta6nt ("1d21e5ae0c7ca4126b2690f2a05dd907ce51f913" . "e98770bc354472411ba2867a68175c043e3f06cd") #"D:\\OneDrive\\Usach\\2023\\II_sem\\Paradigmas\\Lab1\\flow.rkt" #"D:\\OneDrive\\Usach\\2023\\II_sem\\Paradigmas\\Lab1\\option.rkt" (collects #"drracket" #"private" #"drracket-errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))

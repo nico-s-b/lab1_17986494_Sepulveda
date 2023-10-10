@@ -21,6 +21,9 @@
 (provide system-talk-norec)
 (provide system-talk-rec)
 (provide format-chat)
+(provide system-simulate)
+(provide myRandom)
+(provide rlist)
 
 (require "option_17986494_SepulvedaBallesteros.rkt")
 (require "flow_17986494_SepulvedaBallesteros.rkt")
@@ -390,6 +393,48 @@
           (format-chat user system (append (list user)(cddr chatH)))    ;Llamado recursivo
           )
        )
-    )
+    ) 
+  )
+)
+ 
+;myRandom: función que entrega un número aleatorio a partir de una semilla dada, respetando el
+;principio de transparencia referencial.
+;Dominio: int
+;Recorrido: int
+(define (myRandom Xn)
+  (modulo (+ (* 1103515245 Xn) 12345) 2147483648)
+)
+
+;rlist: genera una lista de enteros del 1 al 5 en formato string de tamaño "len" a partir de
+;un número entregado. Dado que se entregará un número "aleatorio", la lista generada parecerá
+;conformada por opciones "aleatorias".
+;Dominio: len (int) X numero (int)
+;Recorrido: lista formada por enteros del 1 al 5 en formato string
+;Recursión: natural
+(define (rlist len numero)
+  (if (= len 0)        ;Caso base
+      '()
+      (let ([number (remainder numero 5)]) ;se generan números hasta el 5
+        (if (= number 0)                   ;opcion 0 no es válida, reemplazada por 1
+            (cons "1" (rlist (- len 1) (quotient numero 10)))
+            (cons (number->string number)
+                  (rlist (- len 1) (quotient numero 10)))
+            )))
+)
+
+;system-simulate: simula un diálogo entre chatbots a partir de una semilla aleatoria, agregando
+;un usuario creado ad-hoc al sistema y registrando sus interacciones en el chatHistory.
+;Dominio: system X maxInteractions (int) X semilla (int)
+;Recorrido: system
+(define system-simulate
+  (lambda (system maxI seed)
+    (let* ([random (myRandom seed)]                                   ;generación de número aleatorio
+           [user (string-append "user" (number->string seed))]        ;nombre de usuario ad-hoc
+           [sys (if (system-logged? system) (system-logout system) system)]  ;systema sin sesión activa 
+           [simul-sys (system-talk-rec                                
+                       (system-login (system-add-user sys user) user) ;iniciar sesión usuario ad-hoc
+                       "Hola")])                        ;se realiza una primera interacción con "Hola"
+      ;aplicar system-talk-rec a lista de interacciones generadas aleatoriamente a partir de semilla
+      (apply system-talk-rec simul-sys (rlist (- maxI 1) random)))    
   )
 )

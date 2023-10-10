@@ -13,6 +13,7 @@
 (provide system-talk-rec)
 (provide system-talk-norec)
 (provide system-synthesis)
+(provide system-simulate)
  
 (require "option_17986494_SepulvedaBallesteros.rkt")
 (require "flow_17986494_SepulvedaBallesteros.rkt")
@@ -321,5 +322,22 @@
         ;En caso de no haber sesión iniciada, el chatHistory ya fue guardado completamente
         (format-chat user system (user-chat (system-get-user system user)))
     )
+  )
+)
+
+;system-simulate: simula un diálogo entre chatbots a partir de una semilla aleatoria, agregando
+;un usuario creado ad-hoc al sistema y registrando sus interacciones en el chatHistory.
+;Dominio: system X maxInteractions (int) X semilla (int)
+;Recorrido: system
+(define system-simulate
+  (lambda (system maxI seed)
+    (let* ([random (myRandom seed)]                                   ;generación de número aleatorio
+           [user (string-append "user" (number->string seed))]        ;nombre de usuario ad-hoc
+           [sys (if (system-logged? system) (system-logout system) system)]  ;systema sin sesión activa 
+           [simul-sys (system-talk-rec                                
+                       (system-login (system-add-user sys user) user) ;iniciar sesión usuario ad-hoc
+                       "Hola")])                        ;se realiza una primera interacción con "Hola"
+      ;aplicar system-talk-rec a lista de interacciones generadas aleatoriamente a partir de semilla
+      (apply system-talk-rec simul-sys (rlist (- maxI 1) random)))    
   )
 )

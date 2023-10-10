@@ -2,7 +2,6 @@
 
 (provide chatH)
 (provide chatH-add)
-(provide chat-format)
 (provide chat-cb)
 (provide chat-fl)
 (provide chat-mess)
